@@ -1,0 +1,121 @@
+---
+title: "NCollin_HW9_607"
+author: "Noah Collin"
+date: "10/23/2021"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Homework 9
+**Noah Collin**
+DATA 607
+
+## Libraries:
+
+```{r IntialLibraries}
+library(tidyverse)
+library(httr)
+library(jsonlite)
+```
+
+## API Key:
+For this homework, I'll hard code in my API Key.  If this were to be more "reproducible", I might require a user to enter their API key.
+
+```{r APIKey}
+#https://api.nytimes.com/svc/search/v2/articlesearch.json?q=election&api-key=yourkey
+             
+myapiKey <-  "dddddddddddddddddddddddddddddddd"
+
+print("You're using my API key here.  Please consider using your own.  If you have one, enter it here.  Otherwise, enter nothing: ")
+
+UserInput <- ""
+UserInput <- readline();
+
+library(stringr)
+if (str_length(myapiKey)  == str_length(UserInput)) {
+  myapiKey <- UserInput
+  print("Thanks for using your own API key.")
+} else {
+  print("You're using my key still.  Please don't overuse it...")
+}
+
+
+```
+
+
+## API Variables:
+
+I'm going to search for the term *stenographer*.
+If you're so inclined, you can change the search term, sort by newest, or change the year of search with the variables below.  Just un-comment out the comments and make them strings.  The filters tend to yield less interesting results honestly.
+
+``` {r APICallParamaters}
+searchTerm <- "stenographer"
+sortNewest <- "" #"&sort=newest"
+filter1 <- "" #"&fq=pub_year:(2008)"
+
+
+```
+
+## Calling the API:
+
+```{r CallingNewYorkTimesAPI}
+NYTAPIstring1 <- str_c( "https://api.nytimes.com/svc/search/v2/articlesearch.json?q=", 
+                        searchTerm, 
+                        filter1, 
+                        sortNewest,
+                        "&api-key=", 
+                        myapiKey)
+
+NYTCall1 <- GET(NYTAPIstring1, 
+                verbose())
+
+details <- content(NYTCall1, 
+                   "parse")
+```
+
+## Making the DataFrame:
+
+```{r dataframe1}
+
+headlines <- c()
+snippets <- c()
+wordCounts <- c()
+URLs <- c()
+for (i in seq(1:10)) {
+  if (length(headlines) > i-1) {
+    headlines <- c()
+  }
+   if (length(snippets) > i-1){
+    snippets <- c()
+   }
+   if (length(wordCounts) > i-1) {
+    wordCounts <- c()
+   }
+     if (length(URLs) > i-1) {
+    URLs <- c()
+  }
+  
+  headlines <- c(headlines,details$response$docs[[i]]$headline$main)
+  snippets <- c(snippets,details$response$docs[[i]]$snippet)
+  wordCounts <- c(wordCounts,details$response$docs[[i]]$word_count)
+  URLs <- c(URLs, details$response$docs[[i]]$web_url)
+}
+
+#print(length(snippets))
+
+df1 <- data_frame("headlines" = headlines, "snippets" = snippets, "Reported Word Count" = wordCounts, "URL" = URLs)
+
+
+```
+
+## Printing the DataFrame: 
+The dataframe has four relevant columns populated with the correct information.  Please note that the WordCount column seems to give odd results from the NYT API.
+``` {r printDf}
+print(df1)
+
+```
